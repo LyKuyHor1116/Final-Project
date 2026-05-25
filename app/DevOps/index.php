@@ -53,45 +53,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login — Brew & Bean</title>
 
     <link rel="stylesheet" href="style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 
-<body>
+<body class="auth-page">
 
-    <h1>Login</h1>
+    <div class="auth-wrapper">
 
-    <?php if ($error): ?>
-        <p><?= htmlspecialchars($error) ?></p>
-    <?php endif; ?>
+        <div class="auth-card page-enter">
 
-    <form method="POST">
+            <div class="auth-logo">
+                <span class="logo-icon">☕</span>
+                <h1 class="logo-text">Brew & Bean</h1>
+            </div>
 
-        <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required>
+            <h2 class="auth-title">Welcome back</h2>
+            <p class="auth-subtitle">Sign in to your account</p>
 
-        <br><br>
+            <?php if ($error): ?>
+                <div class="message message-error">
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
 
-        <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required>
+            <form method="POST" class="auth-form" novalidate>
 
-        <br><br>
+                <div class="form-group">
+                    <label for="email">Email</label>
 
-        <button type="submit">
-            Login
-        </button>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="your@email.com"
+                        required>
+                </div>
 
-    </form>
+                <div class="form-group">
+                    <label for="password">Password</label>
 
-    <br>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="••••••••"
+                        required>
+                </div>
 
-    <a href="register.php">
-        Register Here
-    </a>
+                <button type="submit" class="btn btn-primary">
+                    Sign In
+                </button>
+
+            </form>
+
+            <p class="auth-link">
+                Don't have an account?
+                <a href="register.php">Create one</a>
+            </p>
+
+        </div>
+
+    </div>
 
 </body>
 
