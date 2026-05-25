@@ -1,5 +1,8 @@
 <?php
+
 require_once __DIR__ . '/config.php';
+
+$pdo = getDB();
 
 if (isset($_SESSION['user'])) {
     header('Location: dashboard.php');
@@ -50,68 +53,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login — Brew & Bean</title>
 
     <link rel="stylesheet" href="style.css">
-
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 
-<body class="auth-page">
+<body>
 
-    <div class="auth-wrapper">
+    <h1>Login</h1>
 
-        <div class="auth-card page-enter">
+    <?php if ($error): ?>
+        <p><?= htmlspecialchars($error) ?></p>
+    <?php endif; ?>
 
-            <div class="auth-logo">
-                <span class="logo-icon">☕</span>
-                <h1 class="logo-text">Brew & Bean</h1>
-            </div>
+    <form method="POST">
 
-            <h2 class="auth-title">Welcome back</h2>
-            <p class="auth-subtitle">Sign in to your account</p>
+        <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required>
 
-            <?php if ($error): ?>
-                <div class="message message-error">
-                    <?= htmlspecialchars($error) ?>
-                </div>
-            <?php endif; ?>
+        <br><br>
 
-            <form method="POST" class="auth-form" novalidate>
+        <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required>
 
-                <div class="form-group">
-                    <label for="email">Email</label>
+        <br><br>
 
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        placeholder="your@email.com"
-                        required>
-                </div>
+        <button type="submit">
+            Login
+        </button>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
+    </form>
 
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="••••••••"
-                        required>
-                </div>
+    <br>
 
-                <button type="submit" class="btn btn-primary">
-                    Sign In
-                </button>
-
-            </form>
-
-            <p class="auth-link">
-                Don't have an account?
-                <a href="register.php">Create one</a>
-            </p>
-
-        </div>
-
-    </div>
+    <a href="register.php">
+        Register Here
+    </a>
 
 </body>
 
