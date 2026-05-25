@@ -1,70 +1,30 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Host: 127.0.0.1
--- Generation Time: Jan 13, 2026 at 05:17 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+CREATE DATABASE IF NOT EXISTS mydatabase;
+USE mydatabase;
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
+CREATE TABLE IF NOT EXISTS products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    category ENUM('hot', 'iced') NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    description TEXT NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
---
--- Database: `mydatabase`
---
-
--- --------------------------------------------------------
-
---
--- Table structure for table `contacts`
---
-
-CREATE TABLE `contacts` (
-  `id` int(11) NOT NULL,
-  `name` varchar(100) DEFAULT NULL,
-  `email` varchar(100) DEFAULT NULL,
-  `message` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `contacts`
---
-
-INSERT INTO `contacts` (`id`, `name`, `email`, `message`, `created_at`) VALUES
-(1, 'HorBobbie', 'bobbie@gmail.com', 'Outstanding Student!', '2026-01-06 10:42:37'),
-(2, 'Bobbie', 'bob123@gmail.com', 'I really like your web applications!', '2026-01-11 16:52:21'),
-(3, 'Tommy', 'Tom123@gmail.com', 'Always learning, always coding!', '2026-01-11 16:57:46');
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `contacts`
---
-ALTER TABLE `contacts`
-  ADD PRIMARY KEY (`id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `contacts`
---
-ALTER TABLE `contacts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+INSERT INTO products (name, category, price, description, image_url) VALUES
+('Espresso', 'hot', 3.50, 'Bold, intense single shot pulled to perfection.', 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400'),
+('Cappuccino', 'hot', 4.50, 'Espresso topped with velvety steamed milk foam.', 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400'),
+('Caramel Latte', 'hot', 5.00, 'Smooth latte kissed with house-made caramel drizzle.', 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400'),
+('Flat White', 'hot', 4.75, 'Micro-foam milk over a double ristretto. Rich and silky.', 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=400'),
+('Iced Americano', 'iced', 4.00, 'Double espresso over ice with cold water. Crisp and clean.', 'https://images.unsplash.com/photo-1517959105821-eaf2591984ca?w=400'),
+('Cold Brew', 'iced', 5.50, '12-hour slow steep. Naturally sweet and incredibly smooth.', 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400'),
+('Iced Latte', 'iced', 5.00, 'Espresso and cold milk over ice. Light and refreshing.', 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400'),
+('Frappuccino', 'iced', 6.00, 'Blended coffee, ice, and cream. Sweet, cold perfection.', 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=400');

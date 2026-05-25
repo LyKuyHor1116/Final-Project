@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
-initDB();
+// Ensure session is started. initDB() was undefined in some environments.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (isset($_SESSION['user'])) {
     header('Location: dashboard.php');
