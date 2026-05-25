@@ -76,65 +76,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-
+    <title>Register — Brew & Bean</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 
-<body>
+<body class="auth-page">
+    <div class="auth-wrapper">
+        <div class="auth-card page-enter">
+            <div class="auth-logo">
+                <span class="logo-icon">☕</span>
+                <h1 class="logo-text">Brew & Bean</h1>
+            </div>
+            <h2 class="auth-title">Join us</h2>
+            <p class="auth-subtitle">Create your account</p>
 
-    <h1>Register</h1>
+            <?php if ($error): ?>
+                <div class="message message-error"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
 
-    <?php if ($error): ?>
-        <p><?= htmlspecialchars($error) ?></p>
-    <?php endif; ?>
+            <form method="POST" class="auth-form" novalidate>
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="Alex Johnson" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Min. 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
 
-    <form method="POST">
-
-        <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            required>
-
-        <br><br>
-
-        <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required>
-
-        <br><br>
-
-        <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required>
-
-        <br><br>
-
-        <input
-            type="password"
-            name="confirm_password"
-            placeholder="Confirm Password"
-            required>
-
-        <br><br>
-
-        <button type="submit">
-            Register
-        </button>
-
-    </form>
-
-    <br>
-
-    <a href="index.php">
-        Login Here
-    </a>
-
+            <p class="auth-link">
+                Already have an account? <a href="index.php">Sign in</a>
+            </p>
+        </div>
+    </div>
 </body>
 
 </html>
