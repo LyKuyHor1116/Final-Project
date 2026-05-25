@@ -1,18 +1,32 @@
 <?php
 
-$servername = "mysql_server";
-$username = "root";
-$password = "rootpassword";
-$database = "mydatabase";
+session_start();
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $database);
+function getDB()
+{
+    static $pdo = null;
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    if ($pdo === null) {
+
+        $host = "mysql_server";
+        $dbname = "mydatabase";
+        $username = "root";
+        $password = "rootpassword";
+
+        try {
+
+            $pdo = new PDO(
+                "mysql:host=$host;dbname=$dbname;charset=utf8mb4",
+                $username,
+                $password
+            );
+
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOException $e) {
+
+            die("Database connection failed: " . $e->getMessage());
+        }
+    }
+
+    return $pdo;
 }
-
-echo "Connected successfully";
-
-?>
