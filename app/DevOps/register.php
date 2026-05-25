@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/includes/config.php';
-initDB();
+require_once __DIR__ . '/config.php';
 
 if (isset($_SESSION['user'])) {
     header('Location: dashboard.php');
@@ -26,15 +25,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($password !== $confirm) {
         $error = 'Passwords do not match.';
     } else {
-        $pdo = getDB();
+
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
 
         if ($stmt->fetch()) {
+
             $error = 'An account with this email already exists.';
         } else {
+
             $hashed = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)"
+            );
+
             $stmt->execute([$name, $email, $hashed]);
 
             $_SESSION['user'] = [
@@ -42,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'name' => $name,
                 'email' => $email,
             ];
+
             header('Location: dashboard.php');
             exit;
         }
@@ -50,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
+
 <body class="auth-page">
     <div class="auth-wrapper">
         <div class="auth-card page-enter">
@@ -97,4 +105,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </body>
+
 </html>
