@@ -71,7 +71,7 @@ $products = $stmt->fetchAll();
     <main class="dashboard page-enter">
         <!-- Hero -->
         <section class="hero">
-            <h1 class="hero-title">Good <?= date('a') === 'am' ? 'morning' : 'afternoon' ?>, <?= htmlspecialchars(explode(' ', $user['name'])[0]) ?> ☕</h1>
+            <h1 class="hero-title">Good <?= date('a') === 'pm' ? 'evening' : 'morning' ?>, <?= htmlspecialchars(explode(' ', $user['name'])[0]) ?> ☕</h1>
             <p class="hero-subtitle">What are you craving today?</p>
         </section>
 
