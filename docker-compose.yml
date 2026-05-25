@@ -1,0 +1,49 @@
+version: '3.8' 
+
+services:
+    nginx:
+        image: nginx:latest
+        container_name: nginx_server
+        ports:
+            - "8080:80"
+        volumes:
+            - ./nginx/conf.d:/etc/nginx/conf.d
+            - ./app:/var/www/html
+        depends_on:
+            - php
+            - mysql
+        networks:
+            - app-network
+
+    php:
+        image: php:8.2-fpm
+        container_name: php_server
+        volumes:
+            - ./app:/var/www/html   
+        depends_on:
+            - mysql
+        networks:
+            - app-network      
+
+    mysql:
+        image: mysql:8.0
+        container_name: mysql_server
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: mydatabase
+            MYSQL_USER: myuser
+            MYSQL_PASSWORD: mypassword
+        ports:
+            - "3307:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+        networks:
+            - app-network
+
+volumes:
+    mysql_data:
+    
+networks:
+    app-network:
+        driver: bridge
