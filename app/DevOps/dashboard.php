@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/config.php';
 
+date_default_timezone_set('Asia/Phnom_Penh');
+
+
 if (!isset($_SESSION['user'])) {
     header('Location: index.php');
     exit;
