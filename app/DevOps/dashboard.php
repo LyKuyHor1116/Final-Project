@@ -32,6 +32,7 @@ $products = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,6 +40,7 @@ $products = $stmt->fetchAll();
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar">
@@ -53,15 +55,14 @@ $products = $stmt->fetchAll();
                         type="text"
                         id="searchInput"
                         placeholder="Search coffee..."
-                        value="<?= htmlspecialchars($search) ?>"
-                    >
+                        value="<?= htmlspecialchars($search) ?>">
                 </div>
             </div>
             <div class="nav-right">
-                <div class="cart-icon" id="cartIcon">
+                <a href="cart.php" class="cart-icon" id="cartIcon" title="View cart">
                     🛒
                     <span class="cart-badge" id="cartBadge">0</span>
-                </div>
+                </a>
                 <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
                 <a href="logout.php" class="btn-logout">Logout</a>
             </div>
@@ -71,7 +72,22 @@ $products = $stmt->fetchAll();
     <main class="dashboard page-enter">
         <!-- Hero -->
         <section class="hero">
-            <h1 class="hero-title">Good <?= date('a') === 'pm' ? 'afternoon' : 'evening' ?>, <?= htmlspecialchars(explode(' ', $user['name'])[0]) ?> ☕</h1>
+            <?php
+            $hour = date('H');
+
+            if ($hour < 12) {
+                $greeting = 'morning';
+            } elseif ($hour < 18) {
+                $greeting = 'afternoon';
+            } else {
+                $greeting = 'evening';
+            }
+            ?>
+
+            <h1 class="hero-title">
+                Good <?= $greeting ?>,
+                <?= htmlspecialchars(explode(' ', $user['name'])[0]) ?> ☕
+            </h1>
             <p class="hero-subtitle">What are you craving today?</p>
         </section>
 
@@ -96,8 +112,7 @@ $products = $stmt->fetchAll();
                                 src="<?= htmlspecialchars($product['image_url']) ?>"
                                 alt="<?= htmlspecialchars($product['name']) ?>"
                                 class="product-image"
-                                loading="lazy"
-                            >
+                                loading="lazy">
                             <span class="category-tag tag-<?= $product['category'] ?>">
                                 <?= $product['category'] === 'hot' ? '🔥 Hot' : '🧊 Iced' ?>
                             </span>
@@ -132,7 +147,7 @@ $products = $stmt->fetchAll();
         let searchTimeout;
         const searchInput = document.getElementById('searchInput');
 
-        searchInput.addEventListener('input', function () {
+        searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -156,13 +171,16 @@ $products = $stmt->fetchAll();
         }
 
         document.querySelectorAll('.btn-add-cart').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const id = this.dataset.id;
+            btn.addEventListener('click', function() {
+                const id = parseInt(this.dataset.id);
                 const existing = cart.find(item => item.productId === id);
                 if (existing) {
                     existing.quantity++;
                 } else {
-                    cart.push({ productId: id, quantity: 1 });
+                    cart.push({
+                        productId: id,
+                        quantity: 1
+                    });
                 }
                 sessionStorage.setItem('cbs_cart', JSON.stringify(cart));
                 updateCartBadge();
@@ -170,11 +188,31 @@ $products = $stmt->fetchAll();
                 // Brief animation on cart icon
                 const cartIcon = document.getElementById('cartIcon');
                 cartIcon.style.transform = 'scale(1.2)';
-                setTimeout(() => { cartIcon.style.transform = ''; }, 200);
+                setTimeout(() => {
+                    cartIcon.style.transform = '';
+                }, 200);
             });
+        });
+
+        document.getElementById('cartIcon').addEventListener('click', function(e) {
+
+            const cartData = {};
+
+            cart.forEach(item => {
+                cartData[item.productId] = item.quantity;
+            });
+
+            if (Object.keys(cartData).length === 0) {
+
+                e.preventDefault();
+
+                alert('Your cart is empty. Add some coffee first!');
+            }
+
         });
 
         updateCartBadge();
     </script>
 </body>
+
 </html>
