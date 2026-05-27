@@ -66,315 +66,190 @@ $pdo = getDB();
     </main>
 
     <script>
-        // ===== PRODUCTS =====
-        const pdo_products = <?php
-                                $stmt = $pdo->prepare("
-                SELECT id, name, price, image_url
-                FROM products
-            ");
-                                $stmt->execute();
+        const products = <?= json_encode($pdo->query("SELECT id, name, price, image_url")->fetchAll()) ?>;
 
-                                echo json_encode($stmt->fetchAll());
-                                ?>;
+        // Convert to map for fast lookup
+        const productMap = Object.fromEntries(products.map(p => [p.id, p]));
 
-        // ===== PRODUCT MAP =====
-        const productMap = {};
+        // ===== CART STATE (SINGLE SOURCE OF TRUTH) =====
+        let cart = JSON.parse(sessionStorage.getItem('cbs_cart') || '{}');
 
-        pdo_products.forEach(product => {
-            productMap[product.id] = product;
-        });
-
-        // ===== CART =====
-        let cart = JSON.parse(
-            sessionStorage.getItem('cbs_cart') || '[]'
-        );
-
-        const cartData = {};
-
-        cart.forEach(item => {
-            cartData[item.productId] = item.quantity;
-        });
-
-        // ===== RENDER CART =====
-        function renderCart() {
-
-            const container =
-                document.getElementById('cartContent');
-
-            const productIds =
-                Object.keys(cartData);
-
-            // ===== EMPTY CART =====
-            if (productIds.length === 0) {
-
-                container.innerHTML = `
-                    <div class="empty-cart">
-
-                        <div class="empty-cart-icon">
-                            🛒
-                        </div>
-
-                        <h2>
-                            Your cart is empty
-                        </h2>
-
-                        <p>
-                            Looks like you haven't added any coffee yet.
-                        </p>
-
-                        <a href="dashboard.php"
-                           class="btn btn-primary">
-                            Continue Shopping
-                        </a>
-
-                    </div>
-                `;
-
-                return;
-            }
-
-            let total = 0;
-            let itemsHTML = '';
-
-            // ===== CART ITEMS =====
-            productIds.forEach(id => {
-
-                const product = productMap[id];
-
-                if (!product) return;
-
-                const qty = cartData[id];
-
-                const subtotal =
-                    product.price * qty;
-
-                total += subtotal;
-
-                itemsHTML += `
-                    <div class="cart-item">
-
-                        <img
-                            src="${product.image_url}"
-                            alt="${product.name}"
-                            class="cart-item-image"
-                        >
-
-                        <div class="cart-item-details">
-
-                            <h3>
-                                ${product.name}
-                            </h3>
-
-                            <p class="cart-item-price">
-                                $${Number(product.price).toFixed(2)} each
-                            </p>
-
-                        </div>
-
-                        <div class="cart-item-quantity">
-
-                            <button
-                                class="qty-btn"
-                                data-product-id="${id}"
-                                data-action="decrease"
-                            >
-                                −
-                            </button>
-
-                            <input
-                                type="number"
-                                class="qty-input"
-                                value="${qty}"
-                                min="1"
-                                data-product-id="${id}"
-                            >
-
-                            <button
-                                class="qty-btn"
-                                data-product-id="${id}"
-                                data-action="increase"
-                            >
-                                +
-                            </button>
-
-                        </div>
-
-                        <div class="cart-item-subtotal">
-                            $${subtotal.toFixed(2)}
-                        </div>
-
-                        <button
-                            class="btn-remove"
-                            data-product-id="${id}"
-                            title="Remove item"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-                `;
-            });
-
-            // ===== TOTAL =====
-            const tax = total * 0.08;
-            const finalTotal = total + tax;
-
-            // ===== HTML =====
-            container.innerHTML = `
-                <div class="cart-content">
-
-                    <div class="cart-items">
-                        ${itemsHTML}
-                    </div>
-
-                    <div class="cart-summary">
-
-                        <h2>
-                            Order Summary
-                        </h2>
-
-                        <div class="summary-row">
-                            <span>Subtotal</span>
-                            <span>$${total.toFixed(2)}</span>
-                        </div>
-
-                        <div class="summary-row">
-                            <span>Shipping</span>
-                            <span>$0.00</span>
-                        </div>
-
-                        <div class="summary-row">
-                            <span>Tax</span>
-                            <span>$${tax.toFixed(2)}</span>
-                        </div>
-
-                        <div class="summary-row summary-total">
-                            <span>Total</span>
-                            <span>$${finalTotal.toFixed(2)}</span>
-                        </div>
-
-                        <form
-                            id="checkoutForm"
-                            action="checkout.php"
-                            method="POST"
-                        >
-
-                            <input
-                                type="hidden"
-                                name="cart"
-                                id="cartData"
-                                value=""
-                            >
-
-                            <button
-                                type="submit"
-                                class="btn btn-primary btn-large"
-                            >
-                                Proceed to Checkout
-                            </button>
-
-                        </form>
-
-                        <a
-                            href="dashboard.php"
-                            class="btn btn-secondary btn-large"
-                        >
-                            Continue Shopping
-                        </a>
-
-                    </div>
-
-                </div>
-            `;
-
-            attachEventListeners();
+        // ===== SAVE CART =====
+        function saveCart() {
+            sessionStorage.setItem('cbs_cart', JSON.stringify(cart));
         }
 
         // ===== UPDATE CART =====
-        function updateCart(productId, quantity) {
-
-            if (quantity > 0) {
-
-                cartData[productId] = quantity;
-
+        function setQuantity(productId, quantity) {
+            if (quantity <= 0) {
+                delete cart[productId];
             } else {
-
-                delete cartData[productId];
+                cart[productId] = quantity;
             }
 
-            const updatedCart =
-                Object.entries(cartData).map(([pid, qty]) => ({
-                    productId: pid,
-                    quantity: qty
-                }));
-
-            sessionStorage.setItem(
-                'cbs_cart',
-                JSON.stringify(updatedCart)
-            );
-
+            saveCart();
             renderCart();
         }
 
-        // ===== EVENTS =====
-        function attachEventListeners() {
+        // ===== CALCULATIONS =====
+        function getTotals() {
+            let subtotal = 0;
 
-            // Increase / Decrease
-            document.querySelectorAll('.qty-btn')
-                .forEach(btn => {
+            Object.entries(cart).forEach(([id, qty]) => {
+                const product = productMap[id];
+                if (!product) return;
 
-                    btn.addEventListener('click', function() {
+                subtotal += product.price * qty;
+            });
 
-                        const productId =
-                            this.dataset.productId;
+            const tax = subtotal * 0.08;
+            const total = subtotal + tax;
 
-                        const input =
-                            document.querySelector(
-                                `.qty-input[data-product-id="${productId}"]`
-                            );
-
-                        let qty =
-                            parseInt(input.value);
-
-                        if (this.dataset.action === 'increase') {
-
-                            qty++;
-
-                        } else if (qty > 1) {
-
-                            qty--;
-                        }
-
-                        updateCart(productId, qty);
-                    });
-                });
-
-            // Remove
-            document.querySelectorAll('.btn-remove')
-                .forEach(btn => {
-
-                    btn.addEventListener('click', function() {
-
-                        const productId =
-                            this.dataset.productId;
-
-                        updateCart(productId, 0);
-                    });
-                });
-
-            // Checkout
-            document.getElementById('checkoutForm')
-                ?.addEventListener('submit', function() {
-
-                    document.getElementById('cartData').value =
-                        JSON.stringify(cartData);
-                });
+            return {
+                subtotal,
+                tax,
+                total
+            };
         }
 
-        // ===== START =====
+        // ===== RENDER CART =====
+        function renderCart() {
+            const container = document.getElementById('cartContent');
+            const ids = Object.keys(cart);
+
+            // EMPTY CART
+            if (ids.length === 0) {
+                container.innerHTML = `
+            <div class="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <h2>Your cart is empty</h2>
+                <p>Add some items to continue</p>
+                <a href="dashboard.php" class="btn btn-primary">Shop Now</a>
+            </div>
+        `;
+                return;
+            }
+
+            let itemsHTML = '';
+
+            ids.forEach(id => {
+                const product = productMap[id];
+                const qty = cart[id];
+
+                if (!product) return;
+
+                const subtotal = product.price * qty;
+
+                itemsHTML += `
+            <div class="cart-item">
+                <img src="${product.image_url}" class="cart-item-image">
+
+                <div class="cart-item-details">
+                    <h3>${product.name}</h3>
+                    <p>$${Number(product.price).toFixed(2)}</p>
+                </div>
+
+                <div class="cart-item-quantity">
+                    <button class="qty-btn" data-id="${id}" data-action="minus">−</button>
+
+                    <input class="qty-input"
+                        value="${qty}"
+                        data-id="${id}"
+                        readonly
+                    >
+
+                    <button class="qty-btn" data-id="${id}" data-action="plus">+</button>
+                </div>
+
+                <div class="cart-item-subtotal">
+                    $${subtotal.toFixed(2)}
+                </div>
+
+                <button class="btn-remove" data-id="${id}">×</button>
+            </div>
+        `;
+            });
+
+            const {
+                subtotal,
+                tax,
+                total
+            } = getTotals();
+
+            container.innerHTML = `
+        <div class="cart-content">
+
+            <div class="cart-items">
+                ${itemsHTML}
+            </div>
+
+            <div class="cart-summary">
+                <h2>Order Summary</h2>
+
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>$${subtotal.toFixed(2)}</span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Tax</span>
+                    <span>$${tax.toFixed(2)}</span>
+                </div>
+
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+
+                <form id="checkoutForm" action="checkout.php" method="POST">
+                    <input type="hidden" name="cart" id="cartData">
+                    <button class="btn btn-primary btn-large">Checkout</button>
+                </form>
+
+                <a href="dashboard.php" class="btn btn-secondary btn-large">
+                    Continue Shopping
+                </a>
+            </div>
+
+        </div>
+    `;
+
+            attachEvents();
+        }
+
+        // ===== EVENTS (CLEAN EVENT DELEGATION) =====
+        function attachEvents() {
+
+            // PLUS / MINUS
+            document.querySelectorAll('.qty-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const id = btn.dataset.id;
+                    const action = btn.dataset.action;
+
+                    let qty = cart[id] || 1;
+
+                    qty = action === 'plus' ? qty + 1 : qty - 1;
+
+                    setQuantity(id, qty);
+                };
+            });
+
+            // REMOVE
+            document.querySelectorAll('.btn-remove').forEach(btn => {
+                btn.onclick = () => {
+                    setQuantity(btn.dataset.id, 0);
+                };
+            });
+
+            // CHECKOUT
+            document.getElementById('checkoutForm').onsubmit = function() {
+                document.getElementById('cartData').value = JSON.stringify(cart);
+            };
+        }
+
+        // ===== INIT =====
         renderCart();
     </script>
-
 </body>
 
 </html>
