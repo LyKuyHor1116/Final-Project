@@ -301,6 +301,11 @@ if (
                         Continue Shopping
                     </a>
 
+                    <!-- CLEAR CART -->
+                    <script>
+                        sessionStorage.removeItem('cbs_cart');
+                    </script>
+
                 </div>
 
             </div>
