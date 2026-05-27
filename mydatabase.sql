@@ -19,6 +19,32 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    total_amount REAL NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    payment_method TEXT,
+    shipping_address TEXT NOT NULL,
+    shipping_city TEXT NOT NULL,
+    shipping_zip TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    price_at_purchase REAL NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
 INSERT INTO products (name, category, price, description, image_url) VALUES
 ('Espresso', 'hot', 3.50, 'Bold, intense single shot pulled to perfection.', 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400'),
 ('Cappuccino', 'hot', 4.50, 'Espresso topped with velvety steamed milk foam.', 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400'),
