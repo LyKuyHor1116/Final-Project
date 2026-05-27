@@ -9,7 +9,6 @@ if (!isset($_SESSION['user'])) {
 $user = $_SESSION['user'];
 $pdo = getDB();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,156 +18,360 @@ $pdo = getDB();
     <title>Shopping Cart — Brew & Bean</title>
 
     <link rel="stylesheet" href="style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-    <!-- NAVBAR -->
+    <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-inner">
 
             <div class="nav-left">
-                <a href="dashboard.php" class="nav-logo">☕ Brew & Bean</a>
+                <a href="dashboard.php" class="nav-logo">
+                    ☕ Brew & Bean
+                </a>
             </div>
 
             <div class="nav-center">
-                <h2>Your Cart</h2>
+                <h2 class="cart-page-title">Your Cart</h2>
             </div>
 
             <div class="nav-right">
-                <span><?= htmlspecialchars($user['name']) ?></span>
-                <a href="dashboard.php">← Back</a>
-                <a href="logout.php">Logout</a>
+                <span class="user-name">
+                    <?= htmlspecialchars($user['name']) ?>
+                </span>
+
+                <a href="dashboard.php" class="btn-back">
+                    ← Back
+                </a>
+
+                <a href="logout.php" class="btn-logout">
+                    Logout
+                </a>
             </div>
 
         </div>
     </nav>
 
-    <main class="cart-page">
-        <div id="cartContent"></div>
+    <main class="cart-page page-enter">
+
+        <div class="cart-container">
+
+            <div id="cartContent"></div>
+
+        </div>
+
     </main>
 
     <script>
-        // ===== PRODUCTS (SAFE PHP → JS) =====
-        const products = <?= json_encode(
-                                $pdo->query("SELECT id, name, price, image_url FROM products")
-                                    ->fetchAll(PDO::FETCH_ASSOC),
-                                JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
-                            ) ?>;
+        // ===== PRODUCTS =====
+        const pdo_products = <?php
+                                $stmt = $pdo->prepare("
+                SELECT id, name, price, image_url
+                FROM products
+            ");
+                                $stmt->execute();
 
-        // Map for fast lookup
-        const productMap = Object.fromEntries(products.map(p => [p.id, p]));
+                                echo json_encode($stmt->fetchAll());
+                                ?>;
 
-        // ===== CART STATE =====
-        let cart = JSON.parse(sessionStorage.getItem('cbs_cart') || '{}');
+        // ===== PRODUCT MAP =====
+        const productMap = {};
 
-        // Save cart
-        function saveCart() {
-            sessionStorage.setItem('cbs_cart', JSON.stringify(cart));
-        }
+        pdo_products.forEach(product => {
+            productMap[product.id] = product;
+        });
 
-        // Update cart
-        function setQuantity(id, qty) {
-            if (qty <= 0) {
-                delete cart[id];
-            } else {
-                cart[id] = qty;
-            }
+        // ===== CART =====
+        let cart = JSON.parse(
+            sessionStorage.getItem('cbs_cart') || '[]'
+        );
 
-            saveCart();
-            renderCart();
-        }
+        const cartData = {};
 
-        // Calculate totals
-        function getTotals() {
-            let subtotal = 0;
+        cart.forEach(item => {
+            cartData[item.productId] = item.quantity;
+        });
 
-            for (let id in cart) {
-                const product = productMap[id];
-                if (!product) continue;
-
-                subtotal += product.price * cart[id];
-            }
-
-            const tax = subtotal * 0.08;
-            const total = subtotal + tax;
-
-            return {
-                subtotal,
-                tax,
-                total
-            };
-        }
-
-        // Render cart
+        // ===== RENDER CART =====
         function renderCart() {
-            const container = document.getElementById('cartContent');
-            const ids = Object.keys(cart);
 
-            if (ids.length === 0) {
+            const container =
+                document.getElementById('cartContent');
+
+            const productIds =
+                Object.keys(cartData);
+
+            // ===== EMPTY CART =====
+            if (productIds.length === 0) {
+
                 container.innerHTML = `
-            <div style="text-align:center;padding:50px;">
-                <h2>Your cart is empty 🛒</h2>
-                <a href="dashboard.php">Continue Shopping</a>
-            </div>
-        `;
+                    <div class="empty-cart">
+
+                        <div class="empty-cart-icon">
+                            🛒
+                        </div>
+
+                        <h2>
+                            Your cart is empty
+                        </h2>
+
+                        <p>
+                            Looks like you haven't added any coffee yet.
+                        </p>
+
+                        <a href="dashboard.php"
+                           class="btn btn-primary">
+                            Continue Shopping
+                        </a>
+
+                    </div>
+                `;
+
                 return;
             }
 
-            let html = '';
+            let total = 0;
+            let itemsHTML = '';
 
-            ids.forEach(id => {
-                const p = productMap[id];
-                const qty = cart[id];
+            // ===== CART ITEMS =====
+            productIds.forEach(id => {
 
-                if (!p) return;
+                const product = productMap[id];
 
-                html += `
-        <div style="display:flex;gap:10px;margin:10px 0;">
-            <img src="${p.image_url}" width="80">
+                if (!product) return;
 
-            <div style="flex:1;">
-                <h3>${p.name}</h3>
-                <p>$${p.price}</p>
+                const qty = cartData[id];
 
-                <button onclick="setQuantity(${id}, ${qty - 1})">-</button>
-                <span>${qty}</span>
-                <button onclick="setQuantity(${id}, ${qty + 1})">+</button>
-                <button onclick="setQuantity(${id}, 0)">Remove</button>
-            </div>
+                const subtotal =
+                    product.price * qty;
 
-            <div>
-                $${(p.price * qty).toFixed(2)}
-            </div>
-        </div>
-        `;
+                total += subtotal;
+
+                itemsHTML += `
+                    <div class="cart-item">
+
+                        <img
+                            src="${product.image_url}"
+                            alt="${product.name}"
+                            class="cart-item-image"
+                        >
+
+                        <div class="cart-item-details">
+
+                            <h3>
+                                ${product.name}
+                            </h3>
+
+                            <p class="cart-item-price">
+                                $${Number(product.price).toFixed(2)} each
+                            </p>
+
+                        </div>
+
+                        <div class="cart-item-quantity">
+
+                            <button
+                                class="qty-btn"
+                                data-product-id="${id}"
+                                data-action="decrease"
+                            >
+                                −
+                            </button>
+
+                            <input
+                                type="number"
+                                class="qty-input"
+                                value="${qty}"
+                                min="1"
+                                data-product-id="${id}"
+                            >
+
+                            <button
+                                class="qty-btn"
+                                data-product-id="${id}"
+                                data-action="increase"
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+                        <div class="cart-item-subtotal">
+                            $${subtotal.toFixed(2)}
+                        </div>
+
+                        <button
+                            class="btn-remove"
+                            data-product-id="${id}"
+                            title="Remove item"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+                `;
             });
 
-            const {
-                subtotal,
-                tax,
-                total
-            } = getTotals();
+            // ===== TOTAL =====
+            const tax = total * 0.08;
+            const finalTotal = total + tax;
 
+            // ===== HTML =====
             container.innerHTML = `
-        <h2>Cart</h2>
+                <div class="cart-content">
 
-        ${html}
+                    <div class="cart-items">
+                        ${itemsHTML}
+                    </div>
 
-        <hr>
+                    <div class="cart-summary">
 
-        <p>Subtotal: $${subtotal.toFixed(2)}</p>
-        <p>Tax: $${tax.toFixed(2)}</p>
-        <h3>Total: $${total.toFixed(2)}</h3>
+                        <h2>
+                            Order Summary
+                        </h2>
 
-        <form method="POST" action="checkout.php">
-            <input type="hidden" name="cart" value='${JSON.stringify(cart)}'>
-            <button type="submit">Checkout</button>
-        </form>
-    `;
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>$${total.toFixed(2)}</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Shipping</span>
+                            <span>$0.00</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Tax</span>
+                            <span>$${tax.toFixed(2)}</span>
+                        </div>
+
+                        <div class="summary-row summary-total">
+                            <span>Total</span>
+                            <span>$${finalTotal.toFixed(2)}</span>
+                        </div>
+
+                        <form
+                            id="checkoutForm"
+                            action="checkout.php"
+                            method="POST"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="cart"
+                                id="cartData"
+                                value=""
+                            >
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-large"
+                            >
+                                Proceed to Checkout
+                            </button>
+
+                        </form>
+
+                        <a
+                            href="dashboard.php"
+                            class="btn btn-secondary btn-large"
+                        >
+                            Continue Shopping
+                        </a>
+
+                    </div>
+
+                </div>
+            `;
+
+            attachEventListeners();
         }
 
-        // INIT
+        // ===== UPDATE CART =====
+        function updateCart(productId, quantity) {
+
+            if (quantity > 0) {
+
+                cartData[productId] = quantity;
+
+            } else {
+
+                delete cartData[productId];
+            }
+
+            const updatedCart =
+                Object.entries(cartData).map(([pid, qty]) => ({
+                    productId: pid,
+                    quantity: qty
+                }));
+
+            sessionStorage.setItem(
+                'cbs_cart',
+                JSON.stringify(updatedCart)
+            );
+
+            renderCart();
+        }
+
+        // ===== EVENTS =====
+        function attachEventListeners() {
+
+            // Increase / Decrease
+            document.querySelectorAll('.qty-btn')
+                .forEach(btn => {
+
+                    btn.addEventListener('click', function() {
+
+                        const productId =
+                            this.dataset.productId;
+
+                        const input =
+                            document.querySelector(
+                                `.qty-input[data-product-id="${productId}"]`
+                            );
+
+                        let qty =
+                            parseInt(input.value);
+
+                        if (this.dataset.action === 'increase') {
+
+                            qty++;
+
+                        } else if (qty > 1) {
+
+                            qty--;
+                        }
+
+                        updateCart(productId, qty);
+                    });
+                });
+
+            // Remove
+            document.querySelectorAll('.btn-remove')
+                .forEach(btn => {
+
+                    btn.addEventListener('click', function() {
+
+                        const productId =
+                            this.dataset.productId;
+
+                        updateCart(productId, 0);
+                    });
+                });
+
+            // Checkout
+            document.getElementById('checkoutForm')
+                ?.addEventListener('submit', function() {
+
+                    document.getElementById('cartData').value =
+                        JSON.stringify(cartData);
+                });
+        }
+
+        // ===== START =====
         renderCart();
     </script>
 

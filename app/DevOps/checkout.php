@@ -77,95 +77,76 @@ if (
     $cardName =
         trim($_POST['card_name'] ?? '');
 
-    // ===== VALIDATION =====
-    if (
-        empty($address)
-        || empty($city)
-        || empty($zip)
-        || empty($cardNumber)
-        || empty($cardName)
-    ) {
+    // ===== NO STRICT VALIDATION =====
+    try {
 
-        $error =
-            'Please fill in all required fields.';
-    } elseif (
-        strlen(str_replace(' ', '', $cardNumber)) < 13
-    ) {
+        $pdo->beginTransaction();
 
-        $error =
-            'Please enter a valid card number.';
-    } else {
+        // ===== INSERT ORDER =====
+        $stmt = $pdo->prepare("
+            INSERT INTO orders
+            (
+                user_id,
+                total_amount,
+                status,
+                payment_method,
+                shipping_address,
+                shipping_city,
+                shipping_zip
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
 
-        try {
+        $stmt->execute([
+            $user['id'],
+            $totalWithTax,
+            'completed',
+            'credit_card',
+            $address,
+            $city,
+            $zip
+        ]);
 
-            $pdo->beginTransaction();
+        $orderId =
+            $pdo->lastInsertId();
 
-            // ===== INSERT ORDER =====
-            $stmt = $pdo->prepare("
-                INSERT INTO orders
-                (
-                    user_id,
-                    total_amount,
-                    status,
-                    payment_method,
-                    shipping_address,
-                    shipping_city,
-                    shipping_zip
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ");
+        // ===== INSERT ITEMS =====
+        foreach ($cart as $productId => $quantity) {
 
-            $stmt->execute([
-                $user['id'],
-                $totalWithTax,
-                'completed',
-                'credit_card',
-                $address,
-                $city,
-                $zip
-            ]);
+            if (isset($productMap[$productId])) {
 
-            $orderId =
-                $pdo->lastInsertId();
+                $product =
+                    $productMap[$productId];
 
-            // ===== INSERT ITEMS =====
-            foreach ($cart as $productId => $quantity) {
+                $stmt = $pdo->prepare("
+                    INSERT INTO order_items
+                    (
+                        order_id,
+                        product_id,
+                        quantity,
+                        price_at_purchase
+                    )
+                    VALUES (?, ?, ?, ?)
+                ");
 
-                if (isset($productMap[$productId])) {
-
-                    $product =
-                        $productMap[$productId];
-
-                    $stmt = $pdo->prepare("
-                        INSERT INTO order_items
-                        (
-                            order_id,
-                            product_id,
-                            quantity,
-                            price_at_purchase
-                        )
-                        VALUES (?, ?, ?, ?)
-                    ");
-
-                    $stmt->execute([
-                        $orderId,
-                        $productId,
-                        $quantity,
-                        $product['price']
-                    ]);
-                }
+                $stmt->execute([
+                    $orderId,
+                    $productId,
+                    $quantity,
+                    $product['price']
+                ]);
             }
-
-            $pdo->commit();
-
-            $success = true;
-        } catch (Exception $e) {
-
-            $pdo->rollBack();
-
-            $error =
-                'Payment processing failed. Please try again.';
         }
+
+        $pdo->commit();
+
+        $success = true;
+    } catch (Exception $e) {
+
+        $pdo->rollBack();
+
+        $error =
+            'Payment processing failed. Please try again.';
     }
 }
 
@@ -352,8 +333,7 @@ if (
                                     type="text"
                                     id="address"
                                     name="address"
-                                    placeholder="123 Coffee St."
-                                    required>
+                                    placeholder="123 Coffee St.">
 
                             </div>
 
@@ -369,8 +349,7 @@ if (
                                         type="text"
                                         id="city"
                                         name="city"
-                                        placeholder="San Francisco"
-                                        required>
+                                        placeholder="San Francisco">
 
                                 </div>
 
@@ -384,8 +363,7 @@ if (
                                         type="text"
                                         id="zip"
                                         name="zip"
-                                        placeholder="94102"
-                                        required>
+                                        placeholder="94102">
 
                                 </div>
 
@@ -410,8 +388,7 @@ if (
                                     type="text"
                                     id="card_name"
                                     name="card_name"
-                                    placeholder="John Doe"
-                                    required>
+                                    placeholder="John Doe">
 
                             </div>
 
@@ -426,8 +403,7 @@ if (
                                     id="card_number"
                                     name="card_number"
                                     placeholder="1234 5678 9012 3456"
-                                    maxlength="19"
-                                    required>
+                                    maxlength="19">
 
                             </div>
 
