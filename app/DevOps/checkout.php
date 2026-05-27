@@ -77,76 +77,95 @@ if (
     $cardName =
         trim($_POST['card_name'] ?? '');
 
-    // ===== NO STRICT VALIDATION =====
-    try {
-
-        $pdo->beginTransaction();
-
-        // ===== INSERT ORDER =====
-        $stmt = $pdo->prepare("
-            INSERT INTO orders
-            (
-                user_id,
-                total_amount,
-                status,
-                payment_method,
-                shipping_address,
-                shipping_city,
-                shipping_zip
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-
-        $stmt->execute([
-            $user['id'],
-            $totalWithTax,
-            'completed',
-            'credit_card',
-            $address,
-            $city,
-            $zip
-        ]);
-
-        $orderId =
-            $pdo->lastInsertId();
-
-        // ===== INSERT ITEMS =====
-        foreach ($cart as $productId => $quantity) {
-
-            if (isset($productMap[$productId])) {
-
-                $product =
-                    $productMap[$productId];
-
-                $stmt = $pdo->prepare("
-                    INSERT INTO order_items
-                    (
-                        order_id,
-                        product_id,
-                        quantity,
-                        price_at_purchase
-                    )
-                    VALUES (?, ?, ?, ?)
-                ");
-
-                $stmt->execute([
-                    $orderId,
-                    $productId,
-                    $quantity,
-                    $product['price']
-                ]);
-            }
-        }
-
-        $pdo->commit();
-
-        $success = true;
-    } catch (Exception $e) {
-
-        $pdo->rollBack();
+    // ===== VALIDATION =====
+    if (
+        empty($address)
+        || empty($city)
+        || empty($zip)
+        || empty($cardNumber)
+        || empty($cardName)
+    ) {
 
         $error =
-            'Payment processing failed. Please try again.';
+            'Please fill in all required fields.';
+    } elseif (
+        strlen(str_replace(' ', '', $cardNumber)) < 13
+    ) {
+
+        $error =
+            'Please enter a valid card number.';
+    } else {
+
+        try {
+
+            $pdo->beginTransaction();
+
+            // ===== INSERT ORDER =====
+            $stmt = $pdo->prepare("
+                INSERT INTO orders
+                (
+                    user_id,
+                    total_amount,
+                    status,
+                    payment_method,
+                    shipping_address,
+                    shipping_city,
+                    shipping_zip
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+
+            $stmt->execute([
+                $user['id'],
+                $totalWithTax,
+                'completed',
+                'credit_card',
+                $address,
+                $city,
+                $zip
+            ]);
+
+            $orderId =
+                $pdo->lastInsertId();
+
+            // ===== INSERT ITEMS =====
+            foreach ($cart as $productId => $quantity) {
+
+                if (isset($productMap[$productId])) {
+
+                    $product =
+                        $productMap[$productId];
+
+                    $stmt = $pdo->prepare("
+                        INSERT INTO order_items
+                        (
+                            order_id,
+                            product_id,
+                            quantity,
+                            price_at_purchase
+                        )
+                        VALUES (?, ?, ?, ?)
+                    ");
+
+                    $stmt->execute([
+                        $orderId,
+                        $productId,
+                        $quantity,
+                        $product['price']
+                    ]);
+                }
+            }
+
+            $pdo->commit();
+
+            $success = true;
+        } catch (Exception $e) {
+
+            $pdo->rollBack();
+
+            $error =
+                'Payment processing failed. Please try again.';
+        }
     }
 }
 
@@ -333,7 +352,8 @@ if (
                                     type="text"
                                     id="address"
                                     name="address"
-                                    placeholder="123 Coffee St.">
+                                    placeholder="123 Coffee St."
+                                    required>
 
                             </div>
 
@@ -349,7 +369,8 @@ if (
                                         type="text"
                                         id="city"
                                         name="city"
-                                        placeholder="San Francisco">
+                                        placeholder="San Francisco"
+                                        required>
 
                                 </div>
 
@@ -363,7 +384,8 @@ if (
                                         type="text"
                                         id="zip"
                                         name="zip"
-                                        placeholder="94102">
+                                        placeholder="94102"
+                                        required>
 
                                 </div>
 
@@ -388,7 +410,8 @@ if (
                                     type="text"
                                     id="card_name"
                                     name="card_name"
-                                    placeholder="John Doe">
+                                    placeholder="John Doe"
+                                    required>
 
                             </div>
 
@@ -403,7 +426,8 @@ if (
                                     id="card_number"
                                     name="card_number"
                                     placeholder="1234 5678 9012 3456"
-                                    maxlength="19">
+                                    maxlength="19"
+                                    required>
 
                             </div>
 
