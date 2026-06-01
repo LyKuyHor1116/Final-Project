@@ -1,4 +1,4 @@
-version: '3.8' 
+version: '3.8'
 
 services:
     nginx:
@@ -19,11 +19,11 @@ services:
         build: .
         container_name: php_server
         volumes:
-            - ./app:/var/www/html   
+            - ./app:/var/www/html
         depends_on:
             - mysql
         networks:
-            - app-network      
+            - app-network
 
     mysql:
         image: mysql:8.0
@@ -38,12 +38,14 @@ services:
             - "3307:3306"
         volumes:
             - mysql_data:/var/lib/mysql
+            - ./mydatabase.sql:/docker-entrypoint-initdb.d/mydatabase.sql
+
         networks:
             - app-network
 
 volumes:
     mysql_data:
-    
+
 networks:
     app-network:
         driver: bridge
