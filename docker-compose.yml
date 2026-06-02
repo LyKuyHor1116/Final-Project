@@ -52,16 +52,6 @@ services:
     networks:
       - app-network
 
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    restart: unless-stopped
-
-    volumes:
-       - /var/run/docker.sock:/var/run/docker.sock
-
-    command: --interval 60
-
 volumes:
   mysql_data:
 
