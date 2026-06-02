@@ -1,51 +1,70 @@
 version: '3.8'
 
 services:
-    nginx:
-        image: nginx:latest
-        container_name: nginx_server
-        ports:
-            - "8080:80"
-        volumes:
-            - ./nginx/conf.d:/etc/nginx/conf.d
-            - ./app:/var/www/html
-        depends_on:
-            - php
-            - mysql
-        networks:
-            - app-network
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
 
-    php:
-        build: .
-        container_name: php_server
-        volumes:
-            - ./app:/var/www/html
-        depends_on:
-            - mysql
-        networks:
-            - app-network
+    ports:
+      - "8080:80"
 
-    mysql:
-        image: mysql:8.0
-        container_name: mysql_server
-        restart: always
-        environment:
-            MYSQL_ROOT_PASSWORD: rootpassword
-            MYSQL_DATABASE: mydatabase
-            MYSQL_USER: myuser
-            MYSQL_PASSWORD: mypassword
-        ports:
-            - "3307:3306"
-        volumes:
-            - mysql_data:/var/lib/mysql
-            - ./mydatabase.sql:/docker-entrypoint-initdb.d/mydatabase.sql
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./app:/var/www/html
 
-        networks:
-            - app-network
+    depends_on:
+      - php
+
+    networks:
+      - app-network
+
+  php:
+    build: .
+    container_name: php_server
+
+    volumes:
+      - ./app:/var/www/html
+
+    depends_on:
+      - mysql
+
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_server
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+
+    ports:
+      - "3307:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    networks:
+      - app-network
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+
+    volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
+
+    command: --interval 60
 
 volumes:
-    mysql_data:
+  mysql_data:
 
 networks:
-    app-network:
-        driver: bridge
+  app-network:
+    driver: bridge
