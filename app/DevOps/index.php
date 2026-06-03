@@ -68,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h1 class="logo-text">Brew & Bean</h1>
             </div>
 
-            <h2 class="auth-title">Welcome UC</h2>
-            <p class="auth-subtitle">Sign in to your account, please!</p>
+            <h2 class="auth-title">Welcome Back</h2>
+            <p class="auth-subtitle">Sign in to your account</p>
 
             <?php if ($error): ?>
                 <div class="message message-error">
