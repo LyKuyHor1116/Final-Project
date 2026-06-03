@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <h2 class="auth-title">Welcome UC</h2>
-            <p class="auth-subtitle">Sign in to your account</p>
+            <p class="auth-subtitle">Sign in to your account, please!</p>
 
             <?php if ($error): ?>
                 <div class="message message-error">
